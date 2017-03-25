@@ -27,13 +27,6 @@ public class Percolation {
        
         percolationSet = new WeightedQuickUnionUF(gridSize + 2);
         fullnessSet = new WeightedQuickUnionUF(gridSize + 1);
-
-        // Join the top and bottom nodes to the top and bottom rows
-        for (int i = 1; i <= cols; i++) {
-            percolationSet.union(index(1, i), topNode());
-            percolationSet.union(index(rows, i), bottomNode());
-            fullnessSet.union(index(1, i), topNode());
-        }
     }
 
     public void open(int row, int col) {
@@ -49,21 +42,30 @@ public class Percolation {
             int colRight = col + 1;
 
             if (rowAbove >= 1 && isOpen(rowAbove, col)) {
-                percolationSet.union(index(row, col), index(rowAbove, col));
-                fullnessSet.union(index(row, col), index(rowAbove, col));
+                percolationSet.union(i, index(rowAbove, col));
+                fullnessSet.union(i, index(rowAbove, col));
             }
             if (rowBelow <= rows && isOpen(rowBelow, col)) {
-                percolationSet.union(index(row, col), index(rowBelow, col));
-                fullnessSet.union(index(row, col), index(rowBelow, col));
+                percolationSet.union(i, index(rowBelow, col));
+                fullnessSet.union(i, index(rowBelow, col));
             }
             if (colLeft >= 1 && isOpen(row, colLeft)) {
-                percolationSet.union(index(row, col), index(row, colLeft));
-                fullnessSet.union(index(row, col), index(row, colLeft));
+                percolationSet.union(i, index(row, colLeft));
+                fullnessSet.union(i, index(row, colLeft));
             }
             if (colRight <= cols && isOpen(row, colRight)) {
-                percolationSet.union(index(row, col), index(row, colRight));
-                fullnessSet.union(index(row, col), index(row, colRight));
+                percolationSet.union(i, index(row, colRight));
+                fullnessSet.union(i, index(row, colRight));
             }
+            
+            if (row == 1) {
+                percolationSet.union(i, topNode());
+                fullnessSet.union(i, topNode());
+            }
+            if (row == rows) {
+                percolationSet.union(i, bottomNode());
+            }
+            
         }
     }
 
