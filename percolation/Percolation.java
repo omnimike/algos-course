@@ -1,39 +1,43 @@
-import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
 
     private boolean[] openings;
-    private WeightedQuickUnionUF quickFinder;
+    private WeightedQuickUnionUF percolationSet;
+    private WeightedQuickUnionUF fullnessSet;
     private int openCount;
     private int rows;
     private int cols;
 
     public Percolation(int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("n must be greater than 0");
+        }
         rows = n;
         cols = n;
         openCount = 0;
         
         // The +2 is for the top and bottom nodes
-        int totalSize = rows * cols + 2;
+        int gridSize = rows * cols;
 
-        openings = new boolean[totalSize];
-        for (int i = 0; i < totalSize; i++) {
+        openings = new boolean[gridSize];
+        for (int i = 0; i < gridSize; i++) {
             openings[i] = false;
         }
        
-        quickFinder = new WeightedQuickUnionUF(totalSize);
+        percolationSet = new WeightedQuickUnionUF(gridSize + 2);
+        fullnessSet = new WeightedQuickUnionUF(gridSize + 1);
 
         // Join the top and bottom nodes to the top and bottom rows
-        openings[topNode()] = true;
-        openings[bottomNode()] = true;
-        for (int i = 0; i < cols; i++) {
-            quickFinder.union(index(0, i), topNode());
-            quickFinder.union(index(rows-1, i), bottomNode());
+        for (int i = 1; i <= cols; i++) {
+            percolationSet.union(index(1, i), topNode());
+            percolationSet.union(index(rows, i), bottomNode());
+            fullnessSet.union(index(1, i), topNode());
         }
     }
 
     public void open(int row, int col) {
+        validatePoint(row, col);
         int i = index(row, col);
         if (!openings[i]) {
             openings[i] = true;
@@ -44,33 +48,34 @@ public class Percolation {
             int colLeft = col - 1;
             int colRight = col + 1;
 
-            if (rowAbove >= 0) {
-                if (isOpen(rowAbove, col)) {
-                    quickFinder.union(index(row, col), index(rowAbove, col));
-                }
-            } else if (rowBelow < rows) {
-                if (isOpen(rowBelow, col)) {
-                    quickFinder.union(index(row, col), index(rowBelow, col));
-                }
+            if (rowAbove >= 1 && isOpen(rowAbove, col)) {
+                percolationSet.union(index(row, col), index(rowAbove, col));
+                fullnessSet.union(index(row, col), index(rowAbove, col));
             }
-            if (colLeft >= 0) {
-                if (isOpen(row, colLeft)) {
-                    quickFinder.union(index(row, col), index(row, colLeft));
-                }
-            } else if (colRight < cols) {
-                if (isOpen(row, colRight)) {
-                    quickFinder.union(index(row, col), index(row, colRight));
-                }
+            if (rowBelow <= rows && isOpen(rowBelow, col)) {
+                percolationSet.union(index(row, col), index(rowBelow, col));
+                fullnessSet.union(index(row, col), index(rowBelow, col));
+            }
+            if (colLeft >= 1 && isOpen(row, colLeft)) {
+                percolationSet.union(index(row, col), index(row, colLeft));
+                fullnessSet.union(index(row, col), index(row, colLeft));
+            }
+            if (colRight <= cols && isOpen(row, colRight)) {
+                percolationSet.union(index(row, col), index(row, colRight));
+                fullnessSet.union(index(row, col), index(row, colRight));
             }
         }
     }
 
     public boolean isOpen(int row, int col) {
+        validatePoint(row, col);
         return openings[index(row, col)];
     }
 
     public boolean isFull(int row, int col) {
-        return openings[index(row, col)];
+        validatePoint(row, col);
+        int i = index(row, col);
+        return openings[i] && fullnessSet.find(i) == fullnessSet.find(topNode());
     }
 
     public int numberOfOpenSites() {
@@ -78,11 +83,11 @@ public class Percolation {
     }
 
     public boolean percolates() {
-        return quickFinder.find(topNode()) == quickFinder.find(bottomNode());
+        return percolationSet.find(topNode()) == percolationSet.find(bottomNode());
     }
     
     private int index(int row, int col) {
-        return cols * row + col;
+        return cols * (row - 1) + (col - 1);
     }
     
     private int topNode() {
@@ -92,9 +97,17 @@ public class Percolation {
     private int bottomNode() {
         return rows * cols + 1;
     }
+    
+    private void validatePoint(int row, int col) {
+        if (row <= 0 || row > rows) {
+            throw new IndexOutOfBoundsException("row index out of bounds");
+        }
+        if (col <= 0 || col > cols) {
+            throw new IndexOutOfBoundsException("col index out of bounds");
+        }
+    }
 
     public static void main(String[] args) {
-        Percolation per = new Percolation(10);
-        StdOut.println("This is a test");
+        
     }
 }
