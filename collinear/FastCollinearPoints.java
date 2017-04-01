@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
@@ -8,16 +9,23 @@ public class FastCollinearPoints {
 
     private LineSegment[] segments;
 
-    public FastCollinearPoints(Point[] points) {
-        if (points.length < 4) {
+    public FastCollinearPoints(Point[] originalPoints) {
+        if (originalPoints.length < 4) {
             segments = new LineSegment[0];
             return;
         }
+        Point[] originPoints = Arrays.copyOf(originalPoints, originalPoints.length);
+        Point[] points = Arrays.copyOf(originalPoints, originalPoints.length);
+        Arrays.sort(originPoints);
         ArrayList<LineSegment> lines = new ArrayList<LineSegment>();
-        for (int i = 0; i < points.length; i++) {
-            Point originPoint = points[i];
+        for (int i = 0; i < originPoints.length; i++) {
+            Point originPoint = originPoints[i];
+            ArrayList<Point> endpoints = new ArrayList<Point>();
             Arrays.sort(points, originPoint.slopeOrder());
             double runningGrad = originPoint.slopeTo(points[1]);
+            if (runningGrad == Double.NEGATIVE_INFINITY) {
+                throw new IllegalArgumentException("duplicate point detected");
+            }
             int runLength = 1;
             for (int k = 2; k < points.length; k++) {
                 double slope = originPoint.slopeTo(points[k]);
@@ -35,7 +43,9 @@ public class FastCollinearPoints {
                             linearPoints[j] = points[k - j];
                         }
                         Arrays.sort(linearPoints);
-                        lines.add(new LineSegment(linearPoints[0], linearPoints[linearPoints.length - 1]));
+                        if (linearPoints[0] == originPoint) {
+                            endpoints.add(linearPoints[linearPoints.length - 1]);
+                        }
                     }
                     runLength = 1;
                     runningGrad = originPoint.slopeTo(points[k]);
@@ -50,7 +60,17 @@ public class FastCollinearPoints {
                     linearPoints[j] = points[points.length - j];
                 }
                 Arrays.sort(linearPoints);
-                lines.add(new LineSegment(linearPoints[0], linearPoints[linearPoints.length - 1]));
+                if (linearPoints[0] == originPoint) {
+                    endpoints.add(linearPoints[linearPoints.length - 1]);
+                }
+            }
+
+            Collections.sort(endpoints);
+            for (int l = 0; l < endpoints.size(); l++) {
+                Point endpoint = endpoints.get(l);
+                if (l == 0 || endpoint.compareTo(endpoints.get(l - 1)) != 0) {
+                    lines.add(new LineSegment(originPoint, endpoint));
+                }
             }
         }
         segments = lines.toArray(new LineSegment[lines.size()]);
@@ -61,7 +81,7 @@ public class FastCollinearPoints {
     }
 
     public LineSegment[] segments() {
-        return segments;
+        return Arrays.copyOf(segments, segments.length);
     }
 
     public static void main(String[] args) {

@@ -18,6 +18,9 @@ public class BruteCollinearPoints {
             for (int j = i + 1; j < n; j++) {
                 Point b = points[j];
                 double targetSlope = a.slopeTo(b);
+                if (targetSlope == Double.NEGATIVE_INFINITY) {
+                    throw new IllegalArgumentException("duplicate points detected");
+                }
                 for (int k = j + 1; k < n; k++) {
                     Point c = points[k];
                     if (a.slopeTo(c) == targetSlope) {
@@ -44,7 +47,7 @@ public class BruteCollinearPoints {
     }
 
     public LineSegment[] segments() {
-        return segments;
+        return Arrays.copyOf(segments, segments.length);
     }
 
     public static void main(String[] args) {
